@@ -1,9 +1,10 @@
+# 导入所需的模块
 from flask_caching import Cache
 from flask_restful import Api, Resource, reqparse
 from requests_html import HTMLSession
 from flask import Flask, Response, json, request # 你需要导入request模块，否则会报错
-# from requests import request
 
+# 创建一个 Flask 应用对象
 app = Flask(__name__)
 # 配置缓存
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})
@@ -14,7 +15,7 @@ session.headers.update({'User-Agent': agent})
 # 创建一个api对象，用于定义路由
 api = Api(app)
 
-
+# 定义一个资源类，用于爬取图片列表
 class ScrapeImages(Resource):
 
     def get(self):
@@ -49,7 +50,7 @@ class ScrapeImages(Resource):
             headers={'Content-Type': 'application/json; charset=utf-8'},
         )
 
-
+# 定义一个资源类，用于爬取图片详情
 class ScrapeDetails(Resource):
 
     def get(self):
@@ -73,9 +74,10 @@ class ScrapeDetails(Resource):
         else:
             return {'error': 'Invalid detail_url'}
 
-
+# 将资源类和路由关联起来
 api.add_resource(ScrapeImages, '/scrape')
 api.add_resource(ScrapeDetails, '/details')
 
+# 运行 Flask 应用，注意要添加 host 和 port 参数
 if __name__ == '__main__':
-    app.run(debug=False,host='0.0.0.0',port=8080)
+    app.run(host='0.0.0.0', port=8080, debug=False)
