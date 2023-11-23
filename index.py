@@ -78,4 +78,4 @@ api.add_resource(ScrapeImages, '/scrape')
 api.add_resource(ScrapeDetails, '/details')
 
 if __name__ == '__main__':
-    app.run(debug=False)
+    app.run(debug=False,host='0.0.0.0',port=8080)
