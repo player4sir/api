@@ -80,4 +80,4 @@ api.add_resource(ScrapeDetails, '/details')
 
 # 运行 Flask 应用，注意要添加 host 和 port 参数
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080, debug=False)
+    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 8080), debug=False)
