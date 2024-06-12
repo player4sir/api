@@ -1,5 +1,6 @@
-﻿flask-caching==2.1.0
-flask-restful==0.3.10
-requests-html==0.10.0
-Flask==2.0.2
-Werkzeug==2.2.2
+Flask
+Flask-Caching
+Flask-RESTful
+requests-html
+lxml[html_clean]
+Werkzeug
