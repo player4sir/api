@@ -1,8 +1,7 @@
 from flask_caching import Cache
-from flask_restful import Api, Resource, reqparse
+from flask_restful import Api, Resource
 from requests_html import HTMLSession
-from flask import Flask, Response, json, request # 你需要导入request模块，否则会报错
-# from requests import request
+from flask import Flask, Response, json, request
 
 app = Flask(__name__)
 # 配置缓存
@@ -14,17 +13,18 @@ session.headers.update({'User-Agent': agent})
 # 创建一个api对象，用于定义路由
 api = Api(app)
 
-
 class ScrapeImages(Resource):
 
     def get(self):
-        # 你需要使用request.args.get方法来获取参数，而不是直接使用request.args
-        page = request.args.get('page', 1)
-        per_page = request.args.get('per_page', 10)
+        try:
+            page = int(request.args.get('page', 1))
+            per_page = int(request.args.get('per_page', 10))
+        except ValueError:
+            return {'error': 'Invalid parameters'}, 400
 
-        if page is None or page < 1:
+        if page < 1:
             page = 1
-        if per_page is None or per_page < 1:
+        if per_page < 1:
             per_page = 10
 
         image_data = []
@@ -33,20 +33,24 @@ class ScrapeImages(Resource):
             response = session.get(url, verify=True)
             if response.status_code == 200:
                 for card in response.html.find('div.oxy-post'):
-                    image_link = card.find('a', first=True).attrs['href']
-                    image_thum = 'https:' + card.find('img', first=True).attrs['src']
-                    image_title = card.find(
-                        'h3.infinity-post-title', first=True).text
-                    image_data.append({
-                        'title': image_title,
-                        'link': image_link,
-                        'thumbnail': image_thum,
-                    })
+                    try:
+                        image_link = card.find('a', first=True).attrs['href']
+                        image_thum = 'https:' + card.find('img', first=True).attrs['src']
+                        image_title = card.find('h3.infinity-post-title', first=True).text
+                        image_data.append({
+                            'title': image_title,
+                            'link': image_link,
+                            'thumbnail': image_thum,
+                        })
+                    except (AttributeError, IndexError) as e:
+                        # Handle parsing errors
+                        continue
+            else:
+                return {'error': 'Failed to retrieve data from the source'}, 500
 
         return Response(
             json.dumps(image_data),
-            mimetype='application/json',
-            headers={'Content-Type': 'application/json; charset=utf-8'},
+            mimetype='application/json'
         )
 
 
@@ -56,22 +60,26 @@ class ScrapeDetails(Resource):
         detail_url = request.args.get('url')
 
         if detail_url is None:
-            return {'error': 'Missing detail_url parameter'}
+            return {'error': 'Missing detail_url parameter'}, 400
 
         response = session.get(detail_url, verify=True)
         if response.status_code == 200:
             images = []
             for a_tag in response.html.find('a.asigirl-item'):
-                download_link = a_tag.attrs['href']
-                display_img = 'https:' + a_tag.find('img', first=True).attrs['src']
-                images.append({
-                    'link': download_link,
-                    'thumbnail': display_img,
-                })
+                try:
+                    download_link = a_tag.attrs['href']
+                    display_img = 'https:' + a_tag.find('img', first=True).attrs['src']
+                    images.append({
+                        'link': download_link,
+                        'thumbnail': display_img,
+                    })
+                except (AttributeError, IndexError) as e:
+                    # Handle parsing errors
+                    continue
 
             return {'images': images}
         else:
-            return {'error': 'Invalid detail_url'}
+            return {'error': 'Invalid detail_url'}, 400
 
 
 api.add_resource(ScrapeImages, '/scrape')
